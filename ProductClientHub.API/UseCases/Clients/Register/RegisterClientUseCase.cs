@@ -22,7 +22,13 @@ namespace ProductClientHub.API.UseCases.Clients.Register
 
             dbContext.Clients.Add(entity);
 
-            return new ResponseClientJson();
+            dbContext.SaveChanges();
+
+            return new ResponseClientJson
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+            };
         }
 
         private void Validate(RequestClientJson request)
