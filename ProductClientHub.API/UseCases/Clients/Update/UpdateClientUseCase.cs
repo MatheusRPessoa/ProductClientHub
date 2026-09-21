@@ -1,35 +1,30 @@
-﻿using ProductClientHub.API.Entities;
-using ProductClientHub.API.Infrastructure;
+﻿using ProductClientHub.API.Infrastructure;
 using ProductClientHub.API.UseCases.Clients.SharedValidator;
 using ProductClientHub.Communication.Requests;
-using ProductClientHub.Communication.Responses;
 using ProductClientHub.Exceptions.ExceptionsBase;
 
-namespace ProductClientHub.API.UseCases.Clients.Register
+namespace ProductClientHub.API.UseCases.Clients.Update
 {
-    public class RegisterClientUseCase
+    public class UpdateClientUseCase
     {
-        public ResponseShortClientJson Execute(RequestClientJson request)
+        public void Execute(Guid clientId, RequestClientJson request)
         {
             Validate(request);
 
             var dbContext = new ProductClientHubDbContext();
 
-            var entity = new Client
+            var entity = dbContext.Clients.FirstOrDefault(client => client.Id == clientId);
+
+            if(entity == null)
             {
-                Name = request.Name,
-                Email = request.Email,
-            };
+                throw new NotFoundException("Cliente não encontrado");
+            }
 
-            dbContext.Clients.Add(entity);
+            entity.Name = request.Name;
+            entity.Email = request.Email;
 
+            dbContext.Clients.Update(entity);
             dbContext.SaveChanges();
-
-            return new ResponseShortClientJson
-            {
-                Id = entity.Id,
-                Name = entity.Name,
-            };
         }
 
         private void Validate(RequestClientJson request)
@@ -38,7 +33,7 @@ namespace ProductClientHub.API.UseCases.Clients.Register
 
             var result = validator.Validate(request);
 
-            if (result.IsValid == false)
+            if (!result.IsValid)
             {
                 var errors = result.Errors.Select(failure => failure.ErrorMessage).ToList();
 
